@@ -1,6 +1,6 @@
 Package: sdmppa
 Title: Presences and Pseudo-absences generation for Species Distribution Modeling
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: c(
     person("Dayani", "Bailly", , "dayanibailly@nupelia.uem.br", role = c("aut"), comment = c(ORCID = "0000-0002-6954-9902")),
     person("Luiz Fernando", "Esser", , "luizesser@gmail.com", role = c("aut"), comment = c(ORCID = "0000-0003-2982-7223")),
