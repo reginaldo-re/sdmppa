@@ -25,3 +25,5 @@ Imports:
     dplyr,
     purrr,
     rlang
+URL: https://github.com/reginaldo-re/sdmppa
+BugReports: https://github.com/reginaldo-re/sdmppa/issues
