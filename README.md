@@ -6,14 +6,21 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of sdmppa is to …
+The package generates pseudo-absence points (PAP) to be used in species
+distribution modeling (SDM) and environmental niche modeling (ENM). The
+process involves taking an environmental space represented by a set of
+points P and a set of presence points (PP) as input and then generating
+points that mimic environmental conditions of a true absence. The
+resulting PPA is a subset of P and does not contain any points in common
+with PP, meaning that PP and PPA are disjoint sets. The package provides
+several different methods of PPA generation.
 
 ## Installation
 
 You can install the development version of sdmppa like so:
 
 ``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+devtools::install_github("reginaldo-re/sdmppa")
 ```
 
 ## Example
@@ -22,29 +29,33 @@ This is a basic example which shows you how to solve a common problem:
 
 ``` r
 library(sdmppa)
-## basic example code
+P <- dplyr::tibble(
+  cell_id = c(
+    75000, 81017, 81374, 83506, 83508,
+    84360, 84783, 84785, 86047, 86468
+   ),
+  bio_1 = c(
+    25.24835, 26.47237, 25.09730, 25.28250, 25.25749,
+    25.43329, 25.33722, 25.36212, 25.50991, 25.84756
+   ),
+  bio_2 = c(
+    12.365706, 10.976032, 11.488524, 11.492427, 11.356132,
+    11.477320, 11.125202, 11.271169, 10.878525, 10.985706
+   ),
+  bio_3 = c(
+    68.53027, 66.84972, 70.87223, 70.63369, 70.99750,
+    70.81410, 70.95460, 71.04424, 71.87370, 72.48579
+   ),
+  bio_4 = c(
+    48.37795, 54.44825, 42.10769, 42.21368, 40.86964,
+    41.39428, 41.72614, 41.17366, 44.82830, 46.00434
+   )
+)
+PP1 <- dplyr::tibble(
+  cell_id = c(75000, 81017, 84360, 86468),
+  bio_1 = c(25.24835, 26.47237, 25.43329, 25.84756),
+  bio_4 = c(48.37795, 54.44825, 41.39428, 46.00434)
+)
+#'
+PAP <- P|> pa_random(PP1)
 ```
-
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
-
-``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
-```
-
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this.
-
-You can also embed plots, for example:
-
-<img src="man/figures/README-pressure-1.png" width="100%" />
-
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
