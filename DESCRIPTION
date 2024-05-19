@@ -1,13 +1,16 @@
 Package: sdmppa
-Title: Presences and Pseudo-absences generation for Species Distribution Modeling
+Title: Presences and Pseudo-Absences Generation for Species Distribution Modeling
 Version: 0.1.0
 Authors@R: c(
     person("Dayani", "Bailly", , "dayanibailly@nupelia.uem.br", role = c("aut"), comment = c(ORCID = "0000-0002-6954-9902")),
     person("Luiz Fernando", "Esser", , "luizesser@gmail.com", role = c("aut"), comment = c(ORCID = "0000-0003-2982-7223")),
     person("Marcos Robalinho", "Lima", , "robalinho@uel.br", role = c("aut"), comment = c(ORCID = "0000-0002-5901-0911")),
-    person("Reginaldo", "Ré", , "reginaldo@utfpr.edu.br", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6452-3466"))
+    person("Reginaldo", "Ré", , "reginaldo@utfpr.edu.br", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6452-3466")),
+    person("Universidade Estadual de Londrina", role = c("cph")),
+    person("Universidade Estadual de Maringá", role = c("cph")),
+    person("Universidade Tecnológica Federal do Paraná", role = c("cph"))
   )
-Description: The package generates pseudo-absence points (PAP) to be used in species distribution modeling (SDM) and environmental niche modeling (ENM). The process involves taking an environmental space represented by a set of points P and a set of presence points (PP) as input and then generating points that mimic environmental conditions of a true absence.  The resulting PPA is a subset of P and does not contain any points in common with PP,  meaning that PP and PPA are disjoint sets. The package provides several different methods of PPA generation.
+Description: Most algorithms used in Species Distribution Modeling (SDM) require both presences and absences, but true absences are often not available. In such cases, the package generates pseudo-absence points (PAP) for use in SDM and environmental niche modeling (ENM). This process involves taking an environmental space represented by a set of points (P) and a set of presence points (PP) as input, and then generating points that replicate the environmental conditions of a true absence. The resulting PPA is a subset of P and does not contain any points in common with PP, meaning that PP and PPA are disjoint sets. The package offers various methods for generating PPA.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

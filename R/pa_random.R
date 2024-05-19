@@ -121,7 +121,19 @@ pa_random.data.frame <- function(P, PP = NULL) {
       PP_list <- PP |>
         purrr::imap(
           \(x, name_x) {
-            return(f(x, name_x))
+            PPA_iter <- NULL
+            name_x <- as.character(name_x)
+            if (name_x==""){
+              if (checkmate::test_data_frame(x)){
+                PPA_iter <- possibly_pa_random(P, x)
+              }
+            } else {
+              if (name_x %in% colnames(P) && (checkmate::test_vector(x, strict=T))){
+                PPA_iter <- possibly_pa_random(P, dplyr::lst(!!name_x:=x)) |>
+                  purrr::pluck(1)
+              }
+            }
+            return(PPA_iter)
           }
         )
       return (PP_list)
@@ -134,28 +146,6 @@ pa_random.data.frame <- function(P, PP = NULL) {
       "PP must be a dataframe (or a list of dataframes), or a list of ids stored in a column of P (or a list os lists)!"
     )
   )
-}
-
-f <- function(x, name_x){
-  PPA_iter <- NULL
-  name_x <- as.character(name_x)
-  if (name_x==""){
-    if (checkmate::test_data_frame(x)){
-      #PPA_iter <- possibly_pa_random(P, dplyr::lst(!!name_x:=x))
-      PPA_iter <- pa_random(P, x)
-    }
-  } else {
-    if (name_x %in% colnames(P) && (checkmate::test_vector(x, strict=T))){
-      #PPA_iter <- possibly_pa_random(P, dplyr::lst(!!name_x:=x))
-      PPA_iter <- pa_random(P, dplyr::lst(!!name_x:=x)) |>
-        purrr::pluck(1)
-    }
-  }
-
-  #if (name_x %in% colnames(P)){
-  #  PPA_iter <- PPA_iter |> purrr::pluck(1)
-  #}
-  return(PPA_iter)
 }
 
 

@@ -4,9 +4,17 @@
 \name{sdmppa-package}
 \alias{sdmppa}
 \alias{sdmppa-package}
-\title{sdmppa: Presences and Pseudo-absences generation for Species Distribution Modeling}
+\title{sdmppa: Presences and Pseudo-Absences Generation for Species Distribution Modeling}
 \description{
-The package generates pseudo-absence points (PAP) to be used in species distribution modeling (SDM) and environmental niche modeling (ENM). The process involves taking an environmental space represented by a set of points P and a set of presence points (PP) as input and then generating points that mimic environmental conditions of a true absence. The resulting PPA is a subset of P and does not contain any points in common with PP, meaning that PP and PPA are disjoint sets. The package provides several different methods of PPA generation.
+Most algorithms used in Species Distribution Modeling (SDM) require both presences and absences, but true absences are often not available. In such cases, the package generates pseudo-absence points (PAP) for use in SDM and environmental niche modeling (ENM). This process involves taking an environmental space represented by a set of points (P) and a set of presence points (PP) as input, and then generating points that replicate the environmental conditions of a true absence. The resulting PPA is a subset of P and does not contain any points in common with PP, meaning that PP and PPA are disjoint sets. The package offers various methods for generating PPA.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/reginaldo-re/sdmppa}
+  \item Report bugs at \url{https://github.com/reginaldo-re/sdmppa/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Reginaldo Ré \email{reginaldo@utfpr.edu.br} (\href{https://orcid.org/0000-0001-6452-3466}{ORCID})
@@ -16,6 +24,13 @@ Authors:
   \item Dayani Bailly \email{dayanibailly@nupelia.uem.br} (\href{https://orcid.org/0000-0002-6954-9902}{ORCID})
   \item Luiz Fernando Esser \email{luizesser@gmail.com} (\href{https://orcid.org/0000-0003-2982-7223}{ORCID})
   \item Marcos Robalinho Lima \email{robalinho@uel.br} (\href{https://orcid.org/0000-0002-5901-0911}{ORCID})
+}
+
+Other contributors:
+\itemize{
+  \item Universidade Estadual de Londrina [copyright holder]
+  \item Universidade Estadual de Maringá [copyright holder]
+  \item Universidade Tecnológica Federal do Paraná [copyright holder]
 }
 
 }
