@@ -104,19 +104,22 @@ test_that("pa_random.data.frame - Test invalid PP", {
 })
 
 
-test_that("pa_random.data.frame - Test success case, when intersection between
-PAP and PP (dataframe) is null, |PAP|==|PP|, and PAP in PP", {
-  PAP <- P |> pa_random(PP_predictors)
+test_that(
+  "pa_random.data.frame - Test success case, when intersection between
+PAP and PP (dataframe) is null, |PAP|==|PP|, and PAP in PP",
+  {
+    PAP <- P |> pa_random(PP_predictors)
 
-  expect_equal(
-    PAP |> dplyr::setdiff(PP_predictors) |> nrow(),
-    nrow(PP)
-  )
-  expect_equal(
-    PAP |> dplyr::setdiff(P) |> nrow(),
-    0
-  )
-})
+    expect_equal(
+      PAP |> dplyr::setdiff(PP_predictors) |> nrow(),
+      nrow(PP)
+    )
+    expect_equal(
+      PAP |> dplyr::setdiff(P) |> nrow(),
+      0
+    )
+  }
+)
 
 
 test_that("pa_random.data.frame - Inconsistent PP or list in PP", {
@@ -138,20 +141,22 @@ test_that("pa_random.data.frame - Inconsistent PP or list in PP", {
 })
 
 
-test_that("pa_random.data.frame - Test success case, when intersection between
-PAP and PP (list) is null, |PAP|==|PP|, and PAP in PP", {
+test_that(
+  "pa_random.data.frame - Test success case, when intersection between
+PAP and PP (list) is null, |PAP|==|PP|, and PAP in PP",
+  {
+    expect_warning(
+      P |> pa_random(list("cell_id" = c(PP_predictors$cell_id, c(1)))),
+      "from PP does not match"
+    )
 
-  expect_warning(
-    P |> pa_random(list("cell_id" = c(PP_predictors$cell_id, c(1)))),
-    "from PP does not match"
-  )
+    PAP <- P |>
+      pa_random(list("cell_id" = c(PP_predictors$cell_id)))
 
-  PAP <- P |>
-    pa_random(list("cell_id" = c(PP_predictors$cell_id)))
-
-  expect_contains(P$cell_id, PAP$cell_id)
-  expect_true(!any(PAP$cell_id %in% PP$cell_id))
-})
+    expect_contains(P$cell_id, PAP$cell_id)
+    expect_true(!any(PAP$cell_id %in% PP$cell_id))
+  }
+)
 
 test_that("pa_random.data.frame - Test a list of dataframes and named lists", {
   PAP <- P |>

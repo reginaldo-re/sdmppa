@@ -112,7 +112,7 @@ pa_random.data.frame <- function(P, PP = NULL) {
   )
 }
 
-.pa_random_df <- function(P, PP){
+.pa_random_df <- function(P, PP) {
   checkmate::assert_data_frame(
     PP,
     any.missing = FALSE,
@@ -124,7 +124,7 @@ pa_random.data.frame <- function(P, PP = NULL) {
   return(.pa_random(P, PP))
 }
 
-.pa_random_list <- function(P, PP){
+.pa_random_list <- function(P, PP) {
   if (checkmate::test_vector(PP[[1]], strict = TRUE)) {
     checkmate::assert_vector(
       PP[[1]],
@@ -157,25 +157,26 @@ pa_random.data.frame <- function(P, PP = NULL) {
   }
 }
 
-.pa_random_df_list <- function(P, PP){
+.pa_random_df_list <- function(P, PP) {
   PP_list <- PP |>
     purrr::imap(\(x, name_x) {
       PPA_iter <- NULL
       name_x <- as.character(name_x)
       if (checkmate::test_data_frame(x)) {
         possibly_pa_random <- purrr::possibly(
-            .f = .pa_random_df,
-            otherwise = NULL
-          )
+          .f = .pa_random_df,
+          otherwise = NULL
+        )
         PPA_iter <- possibly_pa_random(P, x)
       } else {
         if (name_x %in% colnames(P) &&
-            checkmate::test_vector(x, strict = TRUE)){
+              checkmate::test_vector(x, strict = TRUE)) {
           possibly_pa_random <- purrr::possibly(
-              .f = .pa_random_list,
-              otherwise = NULL
-            )
-          PPA_iter <- possibly_pa_random(P, dplyr::lst(!!name_x := x)) |>
+            .f = .pa_random_list,
+            otherwise = NULL
+          )
+          PPA_iter <-
+            possibly_pa_random(P, dplyr::lst(!!name_x := x)) |>
             purrr::pluck(1)
         }
       }
