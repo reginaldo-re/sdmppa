@@ -96,7 +96,10 @@ test_that("pa_random.data.frame - Test invalid PP", {
     P |> pa_random(list("cell_id" = c(PP_predictors$cell_id, c(NA)))),
     "failed: Contains missing values"
   )
-  expect_null(P |> pa_random(list("cell_id" = NULL)))
+  expect_error(
+    P |> pa_random(list("cell_id" = NULL)),
+    "Assertion on 'PP' failed: Must be of type 'vector', not 'NULL'."
+  )
   expect_error(
     P |> pa_random(list("cell_id_not_in_P" = PP_predictors$cell_id)),
     "P does not contains PP variable name!"

@@ -125,36 +125,35 @@ pa_random.data.frame <- function(P, PP = NULL) {
 }
 
 .pa_random_list <- function(P, PP) {
-  if (checkmate::test_vector(PP[[1]], strict = TRUE)) {
-    checkmate::assert_vector(
-      PP[[1]],
-      any.missing = FALSE,
-      all.missing = FALSE,
-      null.ok = FALSE,
-      max.len = nrow(P),
-      strict = TRUE
-    )
-    id <- names(PP)[1]
-    if (is.null(id) || !(id %in% names(P))) {
-      cli::cli_abort(c("x", "P does not contains PP variable name!"))
-    }
-    PP_joined <- P |>
-      dplyr::filter(!!rlang::sym(id) %in% PP[[id]])
-
-    if (length(PP[[id]]) > nrow(PP_joined)) {
-      PP_dif_elements <- setdiff(PP[[id]], PP_joined[[id]])
-      PP_dif_len <- length(PP_dif_elements)
-      cli::cli_warn(
-        c(
-          "The attribute {.var {id}} from PP does not match:",
-          "i" = "There {?is/are} {PP_dif_len} element{?s} left.",
-          "i" = "{id}: {PP_dif_elements}."
-        )
-      )
-    }
-    PAP <- dplyr::lst(!!id := .pa_random(P, PP_joined) |> purrr::pluck(id))
-    return(PAP)
+  checkmate::assert_vector(
+    PP[[1]],
+    any.missing = FALSE,
+    all.missing = FALSE,
+    null.ok = FALSE,
+    max.len = nrow(P),
+    strict = TRUE,
+    .var.name = "PP"
+  )
+  id <- names(PP)[1]
+  if (is.null(id) || !(id %in% names(P))) {
+    cli::cli_abort(c("x", "P does not contains PP variable name!"))
   }
+  PP_joined <- P |>
+    dplyr::filter(!!rlang::sym(id) %in% PP[[id]])
+
+  if (length(PP[[id]]) > nrow(PP_joined)) {
+    PP_dif_elements <- setdiff(PP[[id]], PP_joined[[id]])
+    PP_dif_len <- length(PP_dif_elements)
+    cli::cli_warn(
+      c(
+        "The attribute {.var {id}} from PP does not match:",
+        "i" = "There {?is/are} {PP_dif_len} element{?s} left.",
+        "i" = "{id}: {PP_dif_elements}."
+      )
+    )
+  }
+  PAP <- dplyr::lst(!!id := .pa_random(P, PP_joined) |> purrr::pluck(id))
+  return(PAP)
 }
 
 .pa_random_df_list <- function(P, PP) {
