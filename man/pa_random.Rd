@@ -12,39 +12,47 @@ pa_random(P, PP)
 \item{PP}{A set representing de presence points.}
 }
 \value{
-The output of the function (PAP)  changes according to the three cases described:
+The output of the function (PAP)  changes according to the three cases
+described:
 \itemize{
-\item If a \code{dataframe} or a named list is passed as parameter, both representing a single \strong{PP},
-the value returned is also a dataframe (PAP);
-\item If a list representing several different \strong{PP} containing data frames or other named lists
-is passed as a parameter,  the returned value is a list of data frames, one for each \strong{PAP}.
+\item If a \code{dataframe} or a named list is passed as parameter, both representing
+a single \strong{PP}, the value returned is also a dataframe (PAP);
+\item If a list representing several different \strong{PP} containing data frames or
+other named lists is passed as a parameter,  the returned value is a list of
+data frames, one for each \strong{PAP}.
 }
 }
 \description{
-\code{pa_random} calculates a set of pseudo-absences points (PAP) \strong{randomly} drawn
-from the enviromental space denoted by P.
+\code{pa_random} calculates a set of pseudo-absences points (PAP) \strong{randomly}
+drawn from the enviromental space denoted by P.
 }
 \details{
 In fact, the data type of parameter \strong{P} is not a \code{set}, but a \code{dataframe}.
-Similarly as \strong{P}, \strong{PP} is not really a \code{set}, It must be a \code{dataframe} or a \code{list}.
-Points in \strong{PP} represent presence points that wil be removed from \strong{P}, once it is necessary
-to reduce \strong{P} so that \strong{PAP} and \strong{PP} keep disjoint. Therefore, \strong{PP} can be:
+Similarly as \strong{P}, \strong{PP} is not really a \code{set}, It must be a \code{dataframe}
+or a \code{list}. Points in \strong{PP} represent presence points that wil be removed
+from \strong{P}, once it is necessary to reduce \strong{P} so that \strong{PAP} and \strong{PP}
+keep disjoint. Therefore, \strong{PP} can be:
 \enumerate{
-\item A \code{dataframe}, such that at least a name of one column in \strong{P}  must match \strong{PP}.
-\item A named list, such that the name of the list must match a column name in \strong{P}, as an index. So,
-the values in the named list must reference rows in \strong{P} that can be joined using the name of the list.
+\item A \code{dataframe}, such that at least a name of one column in \strong{P}  must
+match \strong{PP}.
+\item A named list, such that the name of the list must match a column name in
+\strong{P}, as an index. So,
+the values in the named list must reference rows in \strong{P} that can be joined
+using the name of the list.
 \item A list containing both dataframes (as in 1) and named lists (as in 2).
 }
 
 How is the PPA computed?
 
-When a \code{dataframe} is passed to \strong{PP}, all rows in \emph{P} whose column names match \emph{PP} are
-compared and removed if they are equal. This reduces the environmental space in \emph{P} to such
-that It does not contain \emph{PP},  and avoids common points in \strong{PP} and \strong{PAP}.
-There are two choices when a list is passed: the list is an index referencing rows in \emph{P},
-and the name of the list must match a column in \strong{P}; or, it is an unnamed list containing
-data frames and other inner named lists representing several sets \strong{PP}. In both cases, a
-\code{dataframe} or a named list, \strong{PP} should match at least one column in \emph{P}.
+When a \code{dataframe} is passed to \strong{PP}, all rows in \emph{P} whose column names
+match \emph{PP} are compared and removed if they are equal. This reduces the
+environmental space in \emph{P} to such that It does not contain \emph{PP}, and avoids
+common points in \strong{PP} and \strong{PAP}. There are two choices when a list is
+passed: the list is an index referencing rows in \emph{P}, and the name of the
+list must match a column in \strong{P}; or, it is an unnamed list containing data
+frames and other inner named lists representing several sets \strong{PP}. In both
+cases, a \code{dataframe} or a named list, \strong{PP} should match at least one column
+in \emph{P}.
 }
 \examples{
 P <- dplyr::tibble(
