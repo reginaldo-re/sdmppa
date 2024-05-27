@@ -4,12 +4,12 @@
 \alias{pa_random}
 \title{Calculate pseudo-absences from an enviromental space P and presences PP}
 \usage{
-pa_random(P, PP)
+pa_random(ES, PP)
 }
 \arguments{
-\item{P}{A set representing the environmental space.}
-
 \item{PP}{A set representing de presence points.}
+
+\item{P}{A set representing the environmental space.}
 }
 \value{
 The output of the function (PAP)  changes according to the three cases
@@ -27,32 +27,32 @@ data frames, one for each \strong{PAP}.
 drawn from the enviromental space denoted by P.
 }
 \details{
-In fact, the data type of parameter \strong{P} is not a \code{set}, but a \code{dataframe}.
-Similarly as \strong{P}, \strong{PP} is not really a \code{set}, It must be a \code{dataframe}
+In fact, the data type of parameter \strong{ES} is not a \code{set}, but a \code{dataframe}.
+Similarly as \strong{ES}, \strong{PP} is not really a \code{set}, It must be a \code{dataframe}
 or a \code{list}. Points in \strong{PP} represent presence points that wil be removed
-from \strong{P}, once it is necessary to reduce \strong{P} so that \strong{PAP} and \strong{PP}
+from \strong{ES}, once it is necessary to reduce \strong{ES} so that \strong{PAP} and \strong{PP}
 keep disjoint. Therefore, \strong{PP} can be:
 \enumerate{
-\item A \code{dataframe}, such that at least a name of one column in \strong{P}  must
+\item A \code{dataframe}, such that at least a name of one column in \strong{ES}  must
 match \strong{PP}.
 \item A named list, such that the name of the list must match a column name in
-\strong{P}, as an index. So,
-the values in the named list must reference rows in \strong{P} that can be joined
+\strong{ES}, as an index. So,
+the values in the named list must reference rows in \strong{ES} that can be joined
 using the name of the list.
 \item A list containing both dataframes (as in 1) and named lists (as in 2).
 }
 
 How is the PPA computed?
 
-When a \code{dataframe} is passed to \strong{PP}, all rows in \emph{P} whose column names
+When a \code{dataframe} is passed to \strong{PP}, all rows in \strong{ES} whose column names
 match \emph{PP} are compared and removed if they are equal. This reduces the
-environmental space in \emph{P} to such that It does not contain \emph{PP}, and avoids
+environmental space in \strong{ES} to such that It does not contain \emph{PP}, and avoids
 common points in \strong{PP} and \strong{PAP}. There are two choices when a list is
-passed: the list is an index referencing rows in \emph{P}, and the name of the
-list must match a column in \strong{P}; or, it is an unnamed list containing data
+passed: the list is an index referencing rows in \strong{ES}, and the name of the
+list must match a column in \strong{ES}; or, it is an unnamed list containing data
 frames and other inner named lists representing several sets \strong{PP}. In both
 cases, a \code{dataframe} or a named list, \strong{PP} should match at least one column
-in \emph{P}.
+in \strong{ES}.
 }
 \examples{
 P <- dplyr::tibble(
