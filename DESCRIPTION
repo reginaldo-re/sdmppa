@@ -30,6 +30,8 @@ Imports:
     dplyr,
     purrr,
     rlang,
-    tidyr,
+    glue,
+    stringr,
+    tidyr
 URL: https://github.com/reginaldo-re/sdmppa
 BugReports: https://github.com/reginaldo-re/sdmppa/issues

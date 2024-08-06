@@ -1,24 +1,59 @@
 #' @title Generic Function to Calculate Presences and Pseudo-absences from an
 #' Enviromental Space ES and presences P
 #'
-#' @param ES Espaço ambiental contendo cell_id ou não e, também, as presenças
-#' das espécies ou não. Deve obrigatoriamente conter as variáveis ambientais.
-#' @param P
-#' @param ES_idx
-#' @param ppa_function
+#' @description
+#' Essa função é usada por todos os métodos de geração de pseudo-ausências. Seu
+#' objetivo é validar os dados de entrada para tal geração, execuar a geração
+#' para cada uma das espécies e, validar a saída grenéria para cada método de
+#' geração.
 #'
-#' @return
-#' @export generate_ppa
-#' @rdname generate_ppa
+#' @param ES Um dataframe representando o espaço ambiental contendo as variáveis a
+#' serem usadas na geração das pseudo-ausências. Esse dataframe pode conter colunas
+#' representando as presenças das espécies. Cada espécie em uma coluna e cada
+#' presença em uma linha denotada por valores maiores do que zero. Pode conter,
+#' também,  uma coluna indicando o `ES_idx`, que é um índice para o espaço
+#' geográfico representado, que pode referenciar uma grid
+#' de polígonos ou um raster. Se houver `ES_idx` em **ES**, existe a opção de
+#' mante-lo ou não nas presenças e pseudo-ausências geradas.
+#' @param P Caso **ES** contenha colunas representando as presenças, **P** pode
+#' ser um vetor com os nomes das colunas que representam as presenças das
+#' espécies.
+#' Caso **ES** contenha apenas o espaço ambiental, **P** é um dataframe que
+#' representa as presenças das espécies. Cada espécie em uma coluna e cada
+#' presença em uma linha denotada por valores maiores do que zero. **P** pode
+#' conter uma coluna `ES_idx`, indicando qual linha em **P** será ligada a qual
+#' linha de **ES** por meio de uma juncão. Mas, se não houver e a quantidade de
+#' linhas em **P** for igual a quantidade de linhas em **ES**, ao invés de um join,
+#' um `bind_cols` é usado para indicar qual linha em **P** é ligada a qual linha
+#' em **ES**. Se `ES_idx` não estiver em **P** e quantidade de linhas em **P** for
+#' diferente de **ES**, um erro é gerado.
+#' @param ES_idx Indica o nome da coluna em **ES**, e eventualmente em **P**, é
+#' usada para indicar o espaço geográfico representado em **ES** e, também, para
+#' ligar **ES** a **P**. Pode ser omitido e, nesse caso, o espaço geográfico é
+#' desconsiderado.
+#' @param ppa_function Função que é responsável por fazer a geração das
+#' presenças e pseudo-ausências. Essa função é passada para
+#' `.generate_single_ppa` e deve seguir os mesmos parâmetros que
+#' `.generate_single_ppa.`
+#' @param remove_ES_idx Indica se a coluna que representa o índice do espaço
+#' geográfico deve ou não ser mantido nas presenças e pseudo-ausências geradas.
+#' @param ... Demais parâmetros passadas para a função `ppa_function`.
+#'
+#' @return O valor retornado é uma lista nomeada com as espécies e, em cada
+#' posição da lista, um dataframe contendo as presenças e pseudo-ausências,
+#' juntamente com as variáveis ambientais e, opcionalmente, `ES_idx`.
 #'
 #' @examples
-generate_ppa <- function(ES, P, ES_idx, ppa_function, ...) {
+#'
+#' \dontrun{
+#' a
+#'}
+#' @rdname generate_ppa
+#' @export generate_ppa
+generate_ppa <- function(ES, P, ES_idx, ppa_function, remove_ES_idx, ...) {
   UseMethod("generate_ppa")
 }
 
-
-#' @return \code{NULL}
-#'
 #' @rdname generate_ppa
 #' @method generate_ppa data.frame
 #' @export
@@ -27,152 +62,209 @@ generate_ppa.data.frame <-
            P = NULL,
            ES_idx = NULL,
            ppa_function = NULL,
+           remove_ES_idx = TRUE,
            ...) {
+    if (!is.null(ES_idx)) {
+      assert_choice_cli(
+        ES_idx,
+        choices = names(ES),
+        null.ok = TRUE
+      )
+    }
     if (checkmate::test_atomic_vector(P) || checkmate::test_list(P)) {
       P <- P |>
-        unlist()
-      checkmate::assert_names(
-        P,
-        subset.of = names(ES)
-      )
+        unlist() |>
+        dplyr::setdiff(ES_idx)
+
       names_P <- P
+      assert_names_cli(
+        names_P,
+        subset.of = names(ES),
+        .var.name = "names(P)"
+      )
+      if (length(names_P) == 0) {
+        cli::cli_abort(
+          c(
+            "x" = "P does not contains species names."
+          )
+        )
+      }
       P <- ES |>
         dplyr::select(dplyr::all_of(names_P))
 
       ES <- ES |>
-        dplyr::select(-dplyr::all_of(names_P |> dplyr::setdiff(ES_idx)))
+        dplyr::select(-dplyr::all_of(names_P))
     }
-    checkmate::assert_data_frame(
+    assert_data_frame_cli(
       ES,
       any.missing = FALSE,
       all.missing = FALSE,
       null.ok = FALSE,
       min.cols = 1,
-      nrow = nrow(P)
+      min.rows = nrow(P)
     )
-    checkmate::assert_data_frame(
+    assert_data_frame_cli(
       P,
       any.missing = FALSE,
       all.missing = FALSE,
       null.ok = FALSE,
       min.cols = 1,
-      nrow = nrow(ES)
+      min.rows = 1
     )
-    remove_ES_idx <- FALSE
-    if (is.null(ES_idx)) {
-      checkmate::assert_names(names(P),
-                              disjunct.from = names(ES),
-                              .var.name = "P")
-      remove_ES_idx <- TRUE
-      ES_idx <- ".ES_idx"
-      ES[ES_idx] <- seq_len(nrow(ES))
-      P[ES_idx] <- ES[ES_idx]
-    } else {
-      checkmate::assert_choice(ES_idx,
-                               choices = names(ES),
-                               null.ok = FALSE)
-      names_both <- names(P) |> intersect(names(ES))
-      if (checkmate::test_string(names_both)) {
-        checkmate::check_names(names_both,
-                               identical.to = ES_idx)
-      } else if (checkmate::test_atomic_vector(names_both, min.len = 1)) {
-        cli::cli_abort(
-          c("x" = "There exists more than one column matching P and ES.",
-            "i" = "{length(names_both)} column{?s}: {names_both}.")
-        )
-      }
 
-      if (!(ES_idx %in% names(P))) {
-        remove_ES_idx <- TRUE
+    if (!is.null(ES_idx)) {
+      if (ES_idx %in% names(P)){
+        tmp_P <- P |>
+          dplyr::anti_join(ES, by = c(ES_idx))
+        if (nrow(tmp_P) > 0) {
+          cli::cli_abort(
+            c(
+              "x" = "{nrow(tmp_P)} row{?s} of P can't be joined to ES by {ES_idx}.",
+              "i" = "Please check the P."
+            )
+          )
+        }
+        cli::cli_inform(
+          c(
+            "i" = "Joining ES and P by { ES_idx }."
+          )
+        )
+        P <- ES |>
+          dplyr::select(dplyr::all_of(ES_idx)) |>
+          dplyr::left_join(P, by = c(ES_idx)) |>
+          dplyr::mutate(dplyr::across(dplyr::where(is.numeric),  ~ tidyr::replace_na(., 0)))
+      } else {
+        cli::cli_warn(
+          c(
+            "!" = "{ ES_idx } is present in ES but is not present in P.",
+            "i" = "ES and P have the same number of rows.",
+            "i" = "ES and P were bonded using their row number."
+          )
+        )
         P[ES_idx] <- ES[ES_idx]
       }
+    } else {
+      if (nrow(ES) == nrow(P)) {
+        cli::cli_warn(
+          c(
+            "!" = "ES_idx is not informed.",
+            "i" = "ES and P have the same number of rows.",
+            "i" = "ES and P were bonded using their row number."
+          )
+        )
+      } else {
+        cli::cli_abort(
+          c(
+            "x" = "It was not possible to bind columns from ES and P.",
+            "i" = "Please inform an ES_idx column valid to ES and P."
+          )
+        )
+      }
+      ES_idx <- "..ES_idx"
+      ES$..ES_idx <- seq(1, nrow(ES))
+      P$..ES_idx <- seq(1, nrow(ES))
+      remove_ES_idx <- TRUE
     }
-    checkmate::check_names(
-      names(ES) |> intersect(names(P)),
-      identical.to = ES_idx
+    assert_names_cli(
+      names(ES),
+      disjunct.from = names(P) |> dplyr::setdiff(ES_idx),
+      .var.name = "names(ES)"
     )
-
-    joined_ES_P <- ES |>
-      dplyr::inner_join(P, by = c(ES_idx))
-
-    if (nrow(joined_ES_P) != nrow(ES)) {
-      nrow_diff <- nrow(ES) - nrow(joined_ES_P)
-      cli::cli_abort(
-        c(
-          "x" = "{nrow_diff} row{?s} of P can't be joined to ES by {ES_idx}.",
-          "i" = "Please check the P."
-        )
-      )
-    }
-
-    names_P <- names(P) |>
-      setdiff(ES_idx)
-    if (length(names_P) == 0) {
-      cli::cli_warn(
-        c(
-          "x" = "There are not variables representing enviromental space in P.",
-          "i" = "Please check the P and ES."
-        )
-      )
-    }
-
-
-    PPA <- names_P |>
-      purrr::set_names(names_P) |>
-      purrr::map(\(sp_name) {
-        tmp_PPA <- P |>
-          dplyr::filter(.data[[sp_name]] > 0) |>
-          dplyr::select(dplyr::all_of(c(sp_name, ES_idx))) |>
-          dplyr::left_join(ES, by = ES_idx)
-
+    safe_generate_single_ppa <- purrr::safely(
+      \(sp_name) {
         tmp_PPA <- ES |>
-          .generate_single_ppa(tmp_PPA, ES_idx, sp_name, ppa_function, ...)
+          .generate_single_ppa(
+            P = P |> dplyr::select(dplyr::all_of(c(sp_name, ES_idx))),
+            ES_idx = ES_idx,
+            sp_name = sp_name,
+            ppa_function = ppa_function,
+            ...
+          )
 
         if (remove_ES_idx) {
           tmp_PPA <- tmp_PPA |>
-            dplyr::select(-dplyr::all_of(c(ES_idx)))
+            dplyr::select(-dplyr::all_of(ES_idx))
         }
         return(tmp_PPA)
-      })
+      }
+    )
+    names_P <- names(P) |> dplyr::setdiff(ES_idx)
+    PPA <- names_P |>
+      purrr::set_names(names_P) |>
+      purrr::map(safe_generate_single_ppa)
 
-    checkmate::check_names(names(PPA),
-                           identical.to = names_P)
+    msg_errors <- PPA |>
+      purrr::map("error") |>
+      purrr::map(
+        \(x) {
+          paste(x$message, x$body)
+        }
+      ) |>
+      unlist()
+
+    if (length(msg_errors) > 0){
+      msg_errors <- msg_errors |>
+        purrr::imap_chr(
+          \(m, idx) {
+            glue::glue("({ names(msg_errors[idx]) }) : { m } ") |>
+              fmt_bullet_cli(cli_bullet = "i")
+          }
+        ) |> stats::setNames(rep("i", length(msg_errors)))
+      msg_errors <- c(
+        "!" = "Problems occurs to process some species.",
+        msg_errors
+      )
+      cli::cli_warn(msg_errors)
+    }
+    PPA <- PPA |>
+      purrr::map("result")
+
+    assert_names_cli(
+      names(PPA) |> dplyr::setdiff(ES_idx),
+      identical.to = names_P
+    )
 
     return(PPA)
   }
 
 #' @title .generate_single_ppa
 #'
-#' Produz como resultado um dataframe comas presenças e as pseudo-ausências
+#' @description
+#'
+#' Produz como resultado um dataframe com as presenças e as pseudo-ausências
 #' geradas pela função que está em `ppa_function`.
 #'
-#' @param ES é o espaço ambiental composto pelas variáveis ambientais ou
-#' outras variáveis. Representado sempre por um dataframe, deve conter uma
-#' coluna que que é um índice para células de uma grid ou um raster. Essa coluna
+#' @param ES é o espaço ambiental composto pelas variáveis ambientais.
+#' Representado sempre por um dataframe, deve conter uma
+#' coluna que que é um índice (`ES_idx`). Esse índice pode referenciar uma grid
+#' de polígonos ou um raster que representa o espaço geográfico. Ou, então,
+#' apenas um índice de ligação entre **P** e **ES**. Essa coluna
 #' deve identificar univocamente cada célula da grid ou raster.
 #' @param P é o espaço ambiental das presenças de uma dada espécie.
 #' Representado por um dataframe, deve conter um subconjunto das variáveis de
-#' `ES`, e também um índice, pelo qual será feita a junção com `ES`. Deve
+#' **ES**, e também um índice, pelo qual será feita a junção com **ES**. Deve
 #' conter, além do índice, uma coluna com o nome da espécie (`sp_name`) cujos
 #' valores representam as presenças. Qualquer valor acima de zero é considerado
-#' uma presença. `ES` e `P` devem ter a mesma quantidade de linhas.
-#' @param ES_idx armazena o nome da coluna de `ES` que deve ser usada como
+#' uma presença. **P** e **ES** sofrerão uma junção por meio de `ES_idx`, de maneira
+#' que todas linhas de **P** tenham correspondência em **ES**, e **ES** tenha linhas
+#' suficientes para serem geradas as pseudo-ausências.
+#' @param ES_idx armazena o nome da coluna de **ES** que deve ser usada como
 #' índice.
-#' @param sp_name armazena o nome da coluna de `ES` que representa a espécie.
+#' @param sp_name armazena o nome da coluna de **ES** que representa a espécie.
 #' @param ppa_function função que será invocada para efetivamente gera as
 #' presenças e pseudo-ausências.
 #'
-#' @return Retorna um dataframe com o espaço ambiental de `ES` que representa
-#' as presenças (`P`) e as pseudo-ausências geradas (`PA`). O número de
+#' @return Retorna um dataframe com o espaço ambiental de **ES** que representa
+#' as presenças (**P**) e as pseudo-ausências geradas (`PA`). O número de
 #' presenças é sempre o mesmo número de pseudo-ausências.
 #'
-#' @details Essa função valida a entrada `P`, `ES`, `ES_idx`, `sp_name` e
+#' @details Essa função valida a entrada **P**, **ES**, `ES_idx`, `sp_name` e
 #' `ppa_function` invoca a função de geração especifica que está em
 #' `ppa_function` e checa a saida produzida, que chamamos de `PPA`, representada
 #' por um dataframe contendo em mesmo número as presenças e as pseudo-ausências.
 #'
+#' @rdname generate_single_ppa
 #' @keywords internal
-#' @noRd
 .generate_single_ppa <-
   function(ES = NULL,
            P = NULL,
@@ -180,70 +272,96 @@ generate_ppa.data.frame <-
            sp_name = NULL,
            ppa_function = NULL,
            ...) {
-    checkmate::assert_data_frame(
-      ES,
-      any.missing = FALSE,
-      all.missing = FALSE,
-      null.ok = FALSE,
-      min.cols = 1,
-      min.rows = 1
-    )
-    checkmate::assert_data_frame(
+    assert_data_frame_cli(
       P,
       any.missing = FALSE,
       all.missing = FALSE,
       null.ok = FALSE,
-      min.cols = 1,
-      min.rows = 1
+      ncols = 2,
+      nrows = nrow(ES),
+
     )
-    checkmate::assert_choice(ES_idx,
-                             choices = names(ES),
-                             null.ok = FALSE)
-    checkmate::assert_choice(sp_name,
-                             choices = names(P) |> setdiff(names(ES)),
-                             null.ok = FALSE)
-    checkmate::assert_names(names(P) |> setdiff(names(ES)),
-                            identical.to = sp_name,
-                            type = "unique")
-    checkmate::assert_function(ppa_function,
-                               c("ES", "P", "ES_idx", "sp_name"),
-                               null.ok = FALSE)
+    assert_choice_cli(
+      ES_idx,
+      choices = names(ES) |> dplyr::intersect(names(P)),
+      null.ok = FALSE
+    )
+    assert_names_cli(
+      names(P),
+      identical.to = c(sp_name, ES_idx),
+      type = "unique",
+      .var.name = "names(P)"
+    )
+    assert_function_cli(
+      ppa_function,
+      c("ES", "P", "ES_idx", "sp_name"),
+      null.ok = FALSE
+    )
 
-    joined_ES_P <- ES |>
-      dplyr::inner_join(P, by = c(ES_idx))
+    P_tmp <- P |>
+      dplyr::left_join(ES, by = c(ES_idx))
 
-    if (nrow(joined_ES_P) != nrow(P)) {
-      nrow_diff <- nrow(P) - nrow(joined_ES_P)
+    if (nrow(P_tmp) != nrow(P)) {
       cli::cli_abort(
         c(
-          "x" = "{nrow_diff} row{?s} of P can't be joined to ES by {ES_idx}.",
-          "i" = "Please check P.",
+          "x" = "{nrow(P) - nrow(P_tmp)} row{?s} of P can't be joined to ES by {ES_idx}.",
+          "i" = "Please check the P."
         )
       )
     }
 
-    PPA <- ppa_function(ES, P, ES_idx, sp_name)
+    PPA <- ES |> ppa_function(
+      P,
+      ES_idx,
+      sp_name,
+      ...)
 
-    checkmate::assert_data_frame(
+    assert_data_frame_cli(
       PPA,
       any.missing = FALSE,
       all.missing = FALSE,
       null.ok = FALSE
     )
 
-    checkmate::assert_names(names(PPA),
-                            permutation.of = names(P))
+    assert_names_cli(
+      names(PPA),
+      permutation.of = c(names(P), names(ES))
+    )
 
     P_size <- PPA |>
       dplyr::filter(.data[[sp_name]] > 0) |>
       nrow()
-    checkmate::assert_true(
-      P_size == nrow(P |> dplyr::filter(.data[[sp_name]] > 0))
+    assert_int_cli(
+      P_size,
+      na.ok = FALSE,
+      null.ok = FALSE,
+      lower = nrow(P |> dplyr::filter(.data[[sp_name]] > 0)),
+      upper = nrow(P |> dplyr::filter(.data[[sp_name]] > 0)),
+      .var.name = "nrow(P)"
     )
+
     PA_size <- PPA |>
       dplyr::filter(.data[[sp_name]] == 0) |>
       nrow()
-    checkmate::assert_true(PA_size == P_size)
+    assert_int_cli(
+      PA_size,
+      na.ok = FALSE,
+      null.ok = FALSE,
+      lower = P_size,
+      upper = P_size,
+      .var.name = "nrow(PA)"
+    )
+    if (!is.null(ES_idx)) {
+      assert_names_cli(
+        names(PPA[1:2]),
+        identical.to = c(ES_idx, sp_name),
+      )
+    } else {
+      assert_names_cli(
+        names(PPA[1:1]),
+        identical.to = c(sp_name)
+      )
+    }
 
     return(PPA)
-  }
+}

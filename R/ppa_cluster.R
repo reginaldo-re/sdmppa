@@ -1,51 +1,23 @@
-#' @title Calculate Presences and Pseudo-absences Using Clusterizationfrom an
-#' Enviromental Space ES and presences P
+#' @title Calcula as Presenças e Pseudo-Ausências usando Clusterização sobre o
+#' Espaço Ambiental ES e Presenças P
 #'
 #' @description
-#' `ppa_cluster` calculates a set of pseudo-absences points (PAP) **randomly**
+#' `ppa_cluster` calculates a set of pseudo-absences points (PA) **randomly**
 #' drawn from the enviromental space denoted by ES.
 #'
 #' @param ES A set representing the environmental space.
-#'
-#' @param PP A set representing de presence points.
-#' @param num_clusters Clsuters
+#' @param num_clusters Clusters
+#' @param P Presences
+#' @param ES_idx  Index
+#' @param perc_pres  Removing
+#' @param remove_ES_idx Removing idx
 #'
 #' @details
-#'
-#' In fact, the data type of parameter **ES** is not a `set`, but a `dataframe`.
-#' Similarly as **ES**, **PP** is not really a `set`, It must be a `dataframe`
-#' or a `list`. Points in **PP** represent presence points that wil be removed
-#' from **ES**, once it is necessary to reduce **ES** so that **PAP** and **PP**
-#' keep disjoint. Therefore, **PP** can be:
-#'  1. A `dataframe`, such that at least a name of one column in **ES**  must
-#'  match **PP**.
-#'  2. A named list, such that the name of the list must match a column name in
-#'  **ES**, as an index. So,
-#'  the values in the named list must reference rows in **ES** that can be
-#'  joined using the name of the list.
-#'  3. A list containing both dataframes (as in 1) and named lists (as in 2).
-#'
-#' How is the PPA computed?
-#'
-#' When a `dataframe` is passed to **PP**, all rows in **ES** whose column names
-#' match *PP* are compared and removed if they are equal. This reduces the
-#' environmental space in **ES** to such that It does not contain *PP*, and
-#' avoids common points in **PP** and **PAP**. There are two choices when a list
-#' is passed: the list is an index referencing rows in **ES**, and the name of
-#' the list must match a column in **ES**; or, it is an unnamed list containing
-#' data frames and other inner named lists representing several sets **PP**. In
-#' both cases, a `dataframe` or a named list, **PP** should match at least one
-#' column in **ES**.
+#' Some details
 #'
 #' @returns
 #'
-#' The output of the function (PAP)  changes according to the three cases
-#' described:
-#'  - If a `dataframe` or a named list is passed as parameter, both representing
-#'  a single **PP**, the value returned is also a dataframe (PAP);
-#'  - If a list representing several different **PP** containing data frames or
-#'  other named lists is passed as a parameter,  the returned value is a list of
-#'  data frames, one for each **PAP**.
+#' PPA
 #'
 #' @examples
 #' P <- dplyr::tibble(
@@ -68,117 +40,136 @@
 #'   bio_4 = c(
 #'     48.37795, 54.44825, 42.10769, 42.21368, 40.86964,
 #'     41.39428, 41.72614, 41.17366, 44.82830, 46.00434
-#'   )
-#' )
-#' PP1 <- dplyr::tibble(
-#'   cell_id = c(75000, 81017, 84360, 86468),
-#'   bio_1 = c(25.24835, 26.47237, 25.43329, 25.84756),
-#'   bio_4 = c(48.37795, 54.44825, 41.39428, 46.00434)
+#'   ),
+#'   sp1 = c(0,0,0,1,1,1,0,1,0,0)
 #' )
 #'
-#' PAP <- P |> ppa_cluster(PP1)
-#' PAP <- P |> ppa_cluster(list("cell_id" = PP1$cell_id))
-#' PAP <- P |> ppa_cluster(list(PP1, PP1, PP1))
-#' PAP <- P |> ppa_cluster(
-#'   list(
-#'     list("cell_id" = PP1$cell_id),
-#'     list("cell_id" = PP1$cell_id),
-#'     list("cell_id" = PP1$cell_id)
-#'   )
-#' )
+#' PPA <- P |> ppa_cluster(c("sp1"))
 #'
 #' @export ppa_cluster
 #' @rdname ppa_cluster
-ppa_cluster <- function(ES, PP, ES_idx, num_clusters, perc_pres) {
+ppa_cluster <- function(ES, P, ES_idx, remove_ES_idx, num_clusters, perc_pres) {
   UseMethod("ppa_cluster")
 }
 
-
-#' @return \code{NULL}
 #'
 #' @rdname ppa_cluster
 #' @method ppa_cluster data.frame
 #' @export
-ppa_cluster.data.frame <- function(ES, PP = NULL, ES_idx = NULL,
+ppa_cluster.data.frame <- function(ES, P = NULL, ES_idx = NULL,
+                                   remove_ES_idx = TRUE,
                                    num_clusters = 0, perc_pres = 10) {
     return(
       generate_ppa(
         ES = ES,
         P = P,
         ES_idx = ES_idx,
+        remove_ES_idx = remove_ES_idx,
         ppa_function = .ppa_cluster,
-        num_clusters,
-        perc_pres
+        num_clusters = num_clusters,
+        perc_pres = perc_pres
         )
       )
   }
 
-
-.ppa_cluster <- function(ES = NULL, PP = NULL, ES_idx = NULL, num_clusters = 0,
+.ppa_cluster <- function(ES = NULL, P = NULL, ES_idx = NULL, sp_name = NULL,
+                         num_clusters = 0,
                          perc_pres = 10) {
-    num_clusters <- ifelse(num_clusters == 0,
-                           max(round(nrow(PP) * perc_pres / 100), 1),
-                           num_clusters)
+  P <- P |>
+    dplyr::filter(!!rlang::sym(sp_name) > 0)
 
-    names_ES <- names(ES)
-    names_PP <- names(PP)
-    names_both <- names_PP[names_PP %in% names_ES]
+  if (num_clusters == 0) {
+    num_clusters <- max(round(nrow(P) * perc_pres / 100), 1)
+  }
+
+  P_tmp <- P |>
+    dplyr::left_join(ES, by = ES_idx)
 
 
-    PPA <- NULL
-    set.seed(nrow(P))
-
-    ES_joined <- ES |>
-      dplyr::left_join(PP, by = names_both) |>
-      dplyr::mutate(presence = tidyr::replace_na(.data$presence, 0))
-
-    if (ES_joined$presence |> purrr::discard(is.na) |> sum() != nrow(PP)) {
-      points_not_matched <- ES_joined$presence |>
-        purrr::discard(is.na) |>
-        sum()
-      cli::cli_abort(
-        c("x" = "Something goes wrong joining ES to PP!",
-          "i" = "{points_not_matched} points in PP not matches P using variables that compose the enviromental space.")
+  if (nrow(P_tmp) != nrow(P)) {
+    cli::cli_abort(
+      c(
+        "x" = "{nrow(P) - nrow(P_tmp)} row{?s} of P can't be joined to ES by {ES_idx}.",
+        "i" = "Please check the P."
       )
-    }
+    )
+  } else {
+    P <- P_tmp
+  }
 
-    set.seed(nrow(PP))
-    clusters <- stats::kmeans(ES, centers = num_clusters)
-    ES_joined$cluster <- clusters$cluster
+  names_ES <- names(ES)
+  names_P <- names(P)
+  names_both <- names_P[names_P %in% names_ES] |>
+    dplyr::setdiff(ES_idx)
 
-    clusters_details <- ES_joined |>
-      dplyr::group_by(.data$cluster) |>
-      dplyr::summarise(
-        cluster_size = dplyr::n(),
-        sample_size = (dplyr::n() / nrow(ES_joined) * nrow(PP)) |> round()
-      )
+  ES_joined <- ES |>
+    dplyr::left_join(P |> dplyr::select(-dplyr::all_of(ES_idx)), by = names_both) |>
+    dplyr::mutate(dplyr::across(dplyr::starts_with(sp_name), ~ ifelse(is.na(.x), 0, .x)))
 
-    diff_calc <- nrow(PP) - (clusters_details$sample_size |> sum())
-    if (diff_calc != 0) {
-      clusters_details <- clusters_details |>
-        dplyr::arrange(dplyr::desc(.data$cluster_size),
-                       dplyr::desc(.data$sample_size)) |>
-        dplyr::mutate(
-          sample_size = ifelse(
-            dplyr::row_number() == 1,
-            .data$sample_size + diff_calc,
-            .data$sample_size
-          )
+  if (ES_joined[[sp_name]] |> purrr::discard(is.na) |> length() < nrow(P)) {
+    points_not_matched <- ES_joined[[sp_name]] |>
+      purrr::discard(is.na) |>
+      sum()
+    cli::cli_abort(
+      c("x" = "Something goes wrong joining ES to P!",
+        "i" = "{points_not_matched} points in P does not matches ES using variables that compose the enviromental space.")
+    )
+  }
+
+  set.seed(nrow(P))
+  clusters <- stats::kmeans(ES |> dplyr::select(-dplyr::all_of(ES_idx)), centers = num_clusters)
+  ES_joined$cluster <- clusters$cluster
+
+  clusters_details <- ES_joined |>
+    dplyr::group_by(.data$cluster) |>
+    dplyr::summarise(
+      cluster_size = dplyr::n(),
+      sample_size = (dplyr::n() / nrow(ES_joined) * nrow(P)) |> round()
+    )
+
+  diff_calc <- nrow(P) - (clusters_details$sample_size |> sum())
+  if (diff_calc != 0) {
+    clusters_details <- clusters_details |>
+      dplyr::arrange(dplyr::desc(.data$cluster_size),
+                     dplyr::desc(.data$sample_size)) |>
+      dplyr::mutate(
+        sample_size = ifelse(
+          dplyr::row_number() == 1,
+          .data$sample_size + diff_calc,
+          .data$sample_size
         )
-    }
+      )
+  }
 
-    PAP <- clusters_details |>
-      purrr::pmap_dfr(\(cluster, cluster_size, sample_size, ...) {
-        ES_joined |>
-          dplyr::filter(.data$cluster == cluster &
-                          .data$presence == 0) |>
-          dplyr::select(-c("cluster", "presence")) |>
-          dplyr::sample_n(sample_size, replace = cluster_size < sample_size)
-      })
+  ES_joined <- ES_joined |>
+    dplyr::filter(.data[[sp_name]] == 0)
+  if (nrow(ES_joined)==0) {
+    cli::cli_abort(
+      c("x" = "Something goes wrong!",
+        "i" = "There are no suficient points in ES to generate PPA.")
+    )
+  }
 
-    checkmate::assert_data_frame(PAP,
-                                 any.missing = FALSE,
-                                 nrows = nrow(PP),
-                                 null.ok = FALSE)
-    return(PAP)
+  PA <- clusters_details |>
+    purrr::pmap_dfr(\(cluster, cluster_size, sample_size, ...) {
+      ES_joined <- ES_joined |>
+        dplyr::filter(.data$cluster == cluster) |>
+        dplyr::select(-dplyr::all_of(c("cluster"))) |>
+        dplyr::sample_n(sample_size, replace = cluster_size < sample_size)
+
+    })
+
+
+  checkmate::assert_data_frame(PA,
+                               any.missing = FALSE,
+                               nrows = nrow(P),
+                               null.ok = FALSE)
+  PPA <- P |>
+    dplyr::relocate(dplyr::all_of(c(ES_idx, sp_name))) |>
+    dplyr::bind_rows(
+      PA |>
+        dplyr::select(dplyr::all_of(names(P)))
+    )
+
+  return(PPA)
   }

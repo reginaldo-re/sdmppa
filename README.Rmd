@@ -35,7 +35,7 @@ This is a basic example which shows you how to solve a common problem:
 
 ```{r example}
 library(sdmppa)
-P <- dplyr::tibble(
+ES <- dplyr::tibble(
   cell_id = c(
     75000, 81017, 81374, 83506, 83508,
     84360, 84783, 84785, 86047, 86468
@@ -57,11 +57,8 @@ P <- dplyr::tibble(
     41.39428, 41.72614, 41.17366, 44.82830, 46.00434
   )
 )
-PP1 <- dplyr::tibble(
-  cell_id = c(75000, 81017, 84360, 86468),
-  bio_1 = c(25.24835, 26.47237, 25.43329, 25.84756),
-  bio_4 = c(48.37795, 54.44825, 41.39428, 46.00434)
+sp1 <- dplyr::tibble(
+  cell_id = c(75000, 81017, 84360, 86468)
 )
-#'
-PAP <- P |> pa_random(PP1)
+PPA <- ES |> ppa_random(sp1, ES_idx = "cell_id")
 ```

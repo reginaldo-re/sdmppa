@@ -3,64 +3,42 @@
 \name{ppa_cluster}
 \alias{ppa_cluster}
 \alias{ppa_cluster.data.frame}
-\title{Calculate Presences and Pseudo-absences Using Clusterizationfrom an
-Enviromental Space ES and presences P}
+\title{Calcula as Presenças e Pseudo-Ausências usando Clusterização sobre o
+Espaço Ambiental ES e Presenças P}
 \usage{
-ppa_cluster(ES, PP, num_clusters, ES_idx, perc_pres)
+ppa_cluster(ES, P, ES_idx, remove_ES_idx, num_clusters, perc_pres)
 
-\method{ppa_cluster}{data.frame}(ES, PP = NULL, num_clusters = 0, ES_idx = NULL, perc_pres = 10)
+\method{ppa_cluster}{data.frame}(
+  ES,
+  P = NULL,
+  ES_idx = NULL,
+  remove_ES_idx = TRUE,
+  num_clusters = 0,
+  perc_pres = 10
+)
 }
 \arguments{
 \item{ES}{A set representing the environmental space.}
 
-\item{PP}{A set representing de presence points.}
+\item{P}{Presences}
 
-\item{num_clusters}{Clsuters}
+\item{ES_idx}{Index}
+
+\item{remove_ES_idx}{Removing idx}
+
+\item{num_clusters}{Clusters}
+
+\item{perc_pres}{Removing}
 }
 \value{
-The output of the function (PAP)  changes according to the three cases
-described:
-\itemize{
-\item If a \code{dataframe} or a named list is passed as parameter, both representing
-a single \strong{PP}, the value returned is also a dataframe (PAP);
-\item If a list representing several different \strong{PP} containing data frames or
-other named lists is passed as a parameter,  the returned value is a list of
-data frames, one for each \strong{PAP}.
-}
-
-\code{NULL}
+PPA
 }
 \description{
-\code{ppa_cluster} calculates a set of pseudo-absences points (PAP) \strong{randomly}
+\code{ppa_cluster} calculates a set of pseudo-absences points (PA) \strong{randomly}
 drawn from the enviromental space denoted by ES.
 }
 \details{
-In fact, the data type of parameter \strong{ES} is not a \code{set}, but a \code{dataframe}.
-Similarly as \strong{ES}, \strong{PP} is not really a \code{set}, It must be a \code{dataframe}
-or a \code{list}. Points in \strong{PP} represent presence points that wil be removed
-from \strong{ES}, once it is necessary to reduce \strong{ES} so that \strong{PAP} and \strong{PP}
-keep disjoint. Therefore, \strong{PP} can be:
-\enumerate{
-\item A \code{dataframe}, such that at least a name of one column in \strong{ES}  must
-match \strong{PP}.
-\item A named list, such that the name of the list must match a column name in
-\strong{ES}, as an index. So,
-the values in the named list must reference rows in \strong{ES} that can be
-joined using the name of the list.
-\item A list containing both dataframes (as in 1) and named lists (as in 2).
-}
-
-How is the PPA computed?
-
-When a \code{dataframe} is passed to \strong{PP}, all rows in \strong{ES} whose column names
-match \emph{PP} are compared and removed if they are equal. This reduces the
-environmental space in \strong{ES} to such that It does not contain \emph{PP}, and
-avoids common points in \strong{PP} and \strong{PAP}. There are two choices when a list
-is passed: the list is an index referencing rows in \strong{ES}, and the name of
-the list must match a column in \strong{ES}; or, it is an unnamed list containing
-data frames and other inner named lists representing several sets \strong{PP}. In
-both cases, a \code{dataframe} or a named list, \strong{PP} should match at least one
-column in \strong{ES}.
+Some details
 }
 \examples{
 P <- dplyr::tibble(
@@ -83,23 +61,10 @@ P <- dplyr::tibble(
   bio_4 = c(
     48.37795, 54.44825, 42.10769, 42.21368, 40.86964,
     41.39428, 41.72614, 41.17366, 44.82830, 46.00434
-  )
-)
-PP1 <- dplyr::tibble(
-  cell_id = c(75000, 81017, 84360, 86468),
-  bio_1 = c(25.24835, 26.47237, 25.43329, 25.84756),
-  bio_4 = c(48.37795, 54.44825, 41.39428, 46.00434)
+  ),
+  sp1 = c(0,0,0,1,1,1,0,1,0,0)
 )
 
-PAP <- P |> ppa_cluster(PP1)
-PAP <- P |> ppa_cluster(list("cell_id" = PP1$cell_id))
-PAP <- P |> ppa_cluster(list(PP1, PP1, PP1))
-PAP <- P |> ppa_cluster(
-  list(
-    list("cell_id" = PP1$cell_id),
-    list("cell_id" = PP1$cell_id),
-    list("cell_id" = PP1$cell_id)
-  )
-)
+PPA <- P |> ppa_cluster(c("sp1"))
 
 }
